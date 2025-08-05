@@ -75,11 +75,12 @@ services:
         required: true
       - path: "/opt/containers/.env.local"
         required: false
-    command: redis-server --requirepass $${REDIS_SERVER_PASSWORD}
+    command:
+      - --save ""
     mem_limit: 2048m
     mem_reservation: 512m
     healthcheck:
-      test: [ "CMD-SHELL", "echo 'auth $${REDIS_SERVER_PASSWORD}\nping' | redis-cli | grep PONG" ]
+      test: [ "CMD-SHELL", "redis-cli ping | grep PONG" ]
       start_period: 10s
       interval: 30s
       retries: 3
@@ -108,7 +109,6 @@ services:
       - NEXTCLOUD_ADMIN_USER
       - NEXTCLOUD_ADMIN_PASSWORD
       - REDIS_HOST=nextcloud_redis
-      - REDIS_HOST_PASSWORD
       - TRUSTED_PROXIES=172.18.0.0/24
       - OVERWRITEHOST=next.homburg.dynv6.net
       - OVERWRITECLIURL=https://next.homburg.dynv6.net
@@ -120,7 +120,7 @@ services:
       - /srv/nextcloud/apps:/var/www/html/custom_apps
       - /srv/nextcloud/data:/var/www/html/data
       - /srv/nextcloud/config:/var/www/html/config
-      - /srv/redis-session.ini:/usr/local/etc/php/conf.d/redis-session.ini
+      - /opt/containers/redis-session.ini:/usr/local/etc/php/conf.d/redis-session.ini
       - /opt/containers/nextcloud/app-hooks/post-installation:/docker-entrypoint-hooks.d/post-installation
 
   notify_push:

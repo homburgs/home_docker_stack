@@ -1,0 +1,191 @@
+#networks:
+#  proxy:
+
+services:
+
+  reverse_proxy:
+    image: caddy:2.10
+    container_name: reverse_proxy
+    restart: unless-stopped
+    env_file:
+      - path: "/opt/containers/.env"
+        required: true
+      - path: "/opt/containers/.env.local"
+        required: false
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - TZ
+    depends_on:
+      - nextcloud_apps
+    volumes:
+      - /opt/containers/caddy/Caddyfile:/etc/caddy/Caddyfile
+      - /srv/caddy/data:/data
+      - /srv/caddy/config:/config
+      - /srv/nextcloud/html:/var/www/html:ro
+      - /srv/nextcloud/apps:/var/www/html/custom_apps:ro
+    logging:
+      options:
+        max-size: 5m
+        max-file: 3
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "127.0.0.1:2019/metrics" ]
+      interval: 10s
+      retries: 3
+      start_period: 5s
+      timeout: 5s
+  #    networks:
+  #      - default
+  #      - proxy
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: postgres
+    restart: unless-stopped
+    env_file:
+      - path: "/opt/containers/.env"
+        required: true
+      - path: "/opt/containers/.env.local"
+        required: false
+    hostname: postgres
+    environment:
+      - TZ
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - PGDATA=/var/lib/postgresql/data/pgdata
+      - LANG
+      - POSTGRES_INITDB_ARGS="--locale-provider=icu --icu-locale=de-DE"
+    volumes:
+      - /srv/postgres/data:/var/lib/postgresql/data/pgdata
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d nextcloud -U postgres" ]
+      start_period: 15s
+      interval: 30s
+      retries: 3
+      timeout: 5s
+
+  nextcloud_redis:
+    image: redis:8.0-alpine
+    container_name: nextcloud_redis
+    restart: unless-stopped
+    env_file:
+      - path: "/opt/containers/.env"
+        required: true
+      - path: "/opt/containers/.env.local"
+        required: false
+    command: redis-server --requirepass $${REDIS_SERVER_PASSWORD}
+    mem_limit: 2048m
+    mem_reservation: 512m
+    healthcheck:
+      test: [ "CMD-SHELL", "echo 'auth $${REDIS_SERVER_PASSWORD}\nping' | redis-cli | grep PONG" ]
+      start_period: 10s
+      interval: 30s
+      retries: 3
+      timeout: 3s
+
+  nextcloud_apps:
+    image: nextcloud:31-fpm
+    container_name: nextcloud_apps
+    restart: unless-stopped
+    env_file:
+      - path: "/opt/containers/.env"
+        required: true
+      - path: "/opt/containers/.env.local"
+        required: false
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nextcloud_redis:
+        condition: service_healthy
+    environment:
+      - NEXTCLOUD_TRUSTED_DOMAINS=next.homburg.dynv6.net
+      - POSTGRES_HOST=postgres
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - NEXTCLOUD_ADMIN_USER
+      - NEXTCLOUD_ADMIN_PASSWORD
+      - REDIS_HOST=nextcloud_redis
+      - REDIS_HOST_PASSWORD
+      - TRUSTED_PROXIES=172.18.0.0/24
+      - OVERWRITEHOST=next.homburg.dynv6.net
+      - OVERWRITECLIURL=https://next.homburg.dynv6.net
+      - OVERWRITEPROTOCOL=https
+      - PHP_MEMORY_LIMIT=1G
+      - PHP_UPLOAD_LIMIT=10G
+    volumes:
+      - /srv/nextcloud/html:/var/www/html
+      - /srv/nextcloud/apps:/var/www/html/custom_apps
+      - /srv/nextcloud/data:/var/www/html/data
+      - /srv/nextcloud/config:/var/www/html/config
+      - /srv/redis-session.ini:/usr/local/etc/php/conf.d/redis-session.ini
+      - /opt/containers/nextcloud/app-hooks/post-installation:/docker-entrypoint-hooks.d/post-installation
+
+  notify_push:
+    image: nextcloud:31-fpm
+    container_name: notify_push
+    restart: unless-stopped
+    env_file:
+      - path: "/opt/containers/.env"
+        required: true
+      - path: "/opt/containers/.env.local"
+        required: false
+    depends_on:
+      - reverse_proxy
+      - nextcloud_apps
+    environment:
+      - PORT=7867
+      - NEXTCLOUD_URL=https://next.homburg.dynv6.net
+    volumes:
+      - /srv/nextcloud/html:/var/www/html:ro
+      - /srv/nextcloud/apps:/var/www/html/custom_apps:ro
+      - /srv/nextcloud/config:/var/www/html/config:ro
+    entrypoint: /var/www/html/custom_apps/notify_push/bin/x86_64/notify_push /var/www/html/config/config.php
+  #    networks:
+  #      - default
+  #      - proxy
+
+  imaginary:
+    image: nextcloud/aio-imaginary:latest
+    container_name: imaginary
+    restart: unless-stopped
+    env_file:
+      - path: "/opt/containers/.env"
+        required: true
+      - path: "/opt/containers/.env.local"
+        required: false
+    expose:
+      - "9000"
+    depends_on:
+      - nextcloud_apps
+    environment:
+      - TZ
+    cap_add:
+      - SYS_NICE
+    tmpfs:
+      - /tmp
+
+  collabora:
+    image: collabora/code:latest
+    container_name: collabora
+    restart: unless-stopped
+    env_file:
+      - path: "/opt/containers/.env"
+        required: true
+      - path: "/opt/containers/.env.local"
+        required: false
+    depends_on:
+      - nextcloud_apps
+    environment:
+      - domain=next.homburg.dynv6.net
+      - server_name=collabora.homburg.dynv6.net
+      - "extra_params=--o:ssl.enable=false --o:ssl.termination=true -o:user_interface.use_integration_theme=false"
+      - username=${COLLABORA_USER}
+      - password=${COLLABORA_PASSWORD}
+      - dictionaries=de_DE en_GB en_US
+    cap_add:
+      - MKNOD
+    ports:
+      - "9980:9980"

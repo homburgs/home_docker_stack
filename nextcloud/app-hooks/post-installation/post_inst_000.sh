@@ -4,6 +4,13 @@ php occ app:install groupfolders
 php occ app:install memories
 php occ app:install tasks
 php occ app:install cfg_share_links
+php occ app:install mail
+php occ app:install mail
+php occ app:install richdocuments
+php occ app:install contacts
+php occ app:install files_external
+php occ app:disable activity
+php occ app:disable dashboard
 
 php occ config:system:get enabledPreviewProviders
 php occ config:system:set enabledPreviewProviders 0 --value 'OC\Preview\MP3'
@@ -22,3 +29,4 @@ php occ config:system:set default_language --value 'de'
 php occ config:system:set default_local --value 'de_DE'
 php occ config:system:set default_phone_region --value 'DE'
 php occ config:system:set maintenance_window_start --type=integer --value=1
+php occ background:cron

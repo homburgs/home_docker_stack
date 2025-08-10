@@ -202,3 +202,37 @@ collabora.homburg.dynv6.net {
 		Strict-Transport-Security "max-age=31536000; includeSubDomains" always; # enable HSTS
 	}
 }
+
+git.homburg.dynv6.net {
+    encode gzip zstd
+
+	reverse_proxy /* gitea:3000 {
+		header_up Host {host}
+		header_up Connection "Upgrade"
+		header_up Upgrade websocket
+		transport http {
+
+		}
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains" always; # enable HSTS
+	}
+}
+
+myoffice.homburg.dynv6.net {
+    encode gzip zstd
+
+	reverse_proxy /* myoffice:8080/myoffice {
+		header_up Host {host}
+		header_up Connection "Upgrade"
+		header_up Upgrade websocket
+		transport http {
+
+		}
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains" always; # enable HSTS
+	}
+}

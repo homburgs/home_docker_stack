@@ -256,6 +256,72 @@ services:
     networks:
       - back-end
 
+  paperless:
+    image: ghcr.io/paperless-ngx/paperless-ngx:latest
+    container_name: paperless
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - nextcloud_redis
+      - gotenberg
+      - tika
+    ports:
+      - "8000:8000"
+    volumes:
+      - /srv/paperless/data:/usr/src/paperless/data
+      - /srv/paperless/log:/usr/src/paperless/data/log
+      - /srv/paperless/media:/usr/src/paperless/media
+      - /srv/paperless/export:/usr/src/paperless/export
+      - /srv/paperless/consume:/usr/src/paperless/consume
+    env_file: paperless.env
+    environment:
+      PAPERLESS_REDIS: redis://nextcloud_redis:6379
+      PAPERLESS_DBENGINE: postgresql
+      PAPERLESS_DBHOST: postgres
+      PAPERLESS_DBUSER: ${POSTGRES_USER}
+      PAPERLESS_DBPASS: banane
+      PAPERLESS_TIKA_ENABLED: 1
+      PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://gotenberg:3000
+      PAPERLESS_TIKA_ENDPOINT: http://tika:9998
+      PAPERLESS_OCR_LANGUAGE: deu
+      PAPERLESS_TRUSTED_PROXIES: 172.18.0.0/24
+      PAPERLESS_OCR_OUTPUT_TYPE: pdfa
+    networks:
+      - back-end
+
+  paperless-ai:
+    image: clusterzx/paperless-ai:latest
+    container_name: paperless-ai
+    restart: unless-stopped
+    depends_on:
+      - paperless
+    ports:
+      - "4000:3000"
+    volumes:
+      - /srv/paperless-ai/data:/app/data
+    networks:
+      - back-end
+
+  gotenberg:
+    image: docker.io/gotenberg/gotenberg:8.22
+    container_name: gotenberg
+    restart: unless-stopped
+    # The gotenberg chromium route is used to convert .eml files. We do not
+    # want to allow external content like tracking pixels or even javascript.
+    command:
+      - "gotenberg"
+      - "--chromium-disable-javascript=true"
+      - "--chromium-allow-list=file:///tmp/.*"
+    networks:
+      - back-end
+
+  tika:
+    image: docker.io/apache/tika:latest
+    container_name: tika
+    restart: unless-stopped
+    networks:
+      - back-end
+
 secrets:
   gitea_db_password:
     file: ./secrets/gitea_db_password.txt

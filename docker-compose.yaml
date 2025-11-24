@@ -280,7 +280,7 @@ services:
       PAPERLESS_DBHOST: postgres
       PAPERLESS_DBUSER: ${POSTGRES_USER}
       PAPERLESS_DBPASS: banane
-      PAPERLESS_TIKA_ENABLED: 1
+      PAPERLESS_TIKA_ENABLED: true
       PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://gotenberg:3000
       PAPERLESS_TIKA_ENDPOINT: http://tika:9998
       PAPERLESS_OCR_LANGUAGE: deu
@@ -293,6 +293,9 @@ services:
     image: clusterzx/paperless-ai:latest
     container_name: paperless-ai
     restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
     depends_on:
       - paperless
     ports:
@@ -319,6 +322,22 @@ services:
     image: docker.io/apache/tika:latest
     container_name: tika
     restart: unless-stopped
+    networks:
+      - back-end
+
+  vaultwarden:
+    image: vaultwarden/server:latest
+    container_name: vaultwarden
+    restart: unless-stopped
+    ports:
+      - "777:80"
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+    volumes:
+      - /srv/vaultwarden:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
     networks:
       - back-end
 

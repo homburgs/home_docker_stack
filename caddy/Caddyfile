@@ -1,9 +1,9 @@
 {
-	servers {
-		trusted_proxies static 172.18.0.0/24
-	}
+    servers {
+                trusted_proxies static 172.18.0.0/24
+            }
 
-	email homburgs@gmail.com
+    email homburgs@gmail.com
 #	acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
 }
 
@@ -19,66 +19,95 @@ mini {
 collabora.homburg.dynv6.net {
     encode gzip zstd
 
-	@collabora {
-		path /browser/* # Browser is the client part of LibreOffice Online
-		path /hosting/discovery # WOPI discovery URL
-		path /hosting/capabilities # Show capabilities as json
-		path /cool/* # Main websocket, uploads/downloads, presentations and admin
-	}
+    @collabora {
+                   path /browser/* # Browser is the client part of LibreOffice Online
+                   path /hosting/discovery # WOPI discovery URL
+                   path /hosting/capabilities # Show capabilities as json
+                   path /cool/* # Main websocket, uploads/downloads, presentations and admin
+               }
 
-	reverse_proxy @collabora http://192.168.178.119:9980 {
-		header_up Host {host}
-		header_up Connection "Upgrade"
-		header_up Upgrade websocket
-		transport http {
+    reverse_proxy @collabora http://192.168.178.119:9980 {
+                                                             header_up Host {host}
+                                                             header_up Connection "Upgrade"
+                                                             header_up Upgrade websocket
+                                                             transport http {
 
-		}
-	}
+                                                                            }
+                                                         }
 
-	header {
-		Strict-Transport-Security "max-age=31536000; includeSubDomains" always; # enable HSTS
-	}
+    header {
+               Strict-Transport-Security "max-age=31536000; includeSubDomains" always; # enable HSTS
+           }
 }
 
 git.homburg.dynv6.net {
     encode gzip zstd
 
-	reverse_proxy /* gitea:3000 {
-		header_up Host {host}
-		header_up Connection "Upgrade"
-		header_up Upgrade websocket
-		transport http {
+    reverse_proxy /* gitea:3000 {
+                                    header_up Host {host}
+                                    header_up Connection "Upgrade"
+                                    header_up Upgrade websocket
+                                    transport http {
 
-		}
-	}
+                                                   }
+                                }
 
-	header {
-		Strict-Transport-Security "max-age=31536000; includeSubDomains" always; # enable HSTS
-	}
+    header {
+               Strict-Transport-Security "max-age=31536000; includeSubDomains" always; # enable HSTS
+           }
 }
 
 paperless.homburg.dynv6.net {
     encode gzip zstd
 
-	reverse_proxy /* paperless:8000 {
-		transport http {
-		}
-	}
+    reverse_proxy /* paperless:8000 {
+                                        transport http {
+                                                       }
+                                    }
 
-	header {
-		Strict-Transport-Security "max-age=31536000; includeSubDomains" always; # enable HSTS
-	}
+    header {
+               Strict-Transport-Security "max-age=31536000; includeSubDomains" always; # enable HSTS
+           }
 }
 
 myoffice.homburg.dynv6.net {
     encode gzip zstd
 
-	reverse_proxy /* myoffice:8080 {
-		transport http {
-		}
-	}
+    reverse_proxy /* myoffice:8080 {
+                                       transport http {
+                                                      }
+                                   }
 
-	header {
-		Strict-Transport-Security "max-age=31536000; includeSubDomains" always; # enable HSTS
-	}
+    header {
+               Strict-Transport-Security "max-age=31536000; includeSubDomains" always; # enable HSTS
+           }
+}
+
+hass.homburg.dynv6.net {
+    encode gzip zstd
+
+    reverse_proxy /* http://192.168.178.87:8123 {
+                                                    header_up Host {host}
+                                                    header_up Upgrade websocket
+                                                    transport http {
+                                                                   }
+                                                }
+
+    header {
+               Strict-Transport-Security "max-age=31536000; includeSubDomains" always; # enable HSTS
+           }
+}
+
+bitwarden.homburg.dynv6.net {
+    reverse_proxy /* http://192.168.178.90:7277 {
+                                                    header_up Host {host}
+                                                    header_up Upgrade websocket
+                                                    transport http {
+                                                                   }
+                                                }
+
+    header {
+               Strict-Transport-Security "max-age=31536000; includeSubDomains" always; # enable HSTS
+           }
+    tls internal
 }

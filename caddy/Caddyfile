@@ -7,7 +7,7 @@
 #	acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
 }
 
-next.homburg.dynv6.net {
+next.hsofttec.com {
     import nextcloud.remote
 }
 
@@ -16,7 +16,7 @@ mini {
     import nextcloud.remote
 }
 
-collabora.homburg.dynv6.net {
+collabora.hsofttec.com {
     encode gzip zstd
 
     @collabora {
@@ -40,7 +40,7 @@ collabora.homburg.dynv6.net {
            }
 }
 
-git.homburg.dynv6.net {
+git.hsofttec.com {
     encode gzip zstd
 
     reverse_proxy /* gitea:3000 {
@@ -57,7 +57,7 @@ git.homburg.dynv6.net {
            }
 }
 
-paperless.homburg.dynv6.net {
+paperless.hsofttec.com {
     encode gzip zstd
 
     reverse_proxy /* paperless:8000 {
@@ -70,7 +70,7 @@ paperless.homburg.dynv6.net {
            }
 }
 
-myoffice.homburg.dynv6.net {
+myoffice.hsofttec.com {
     encode gzip zstd
 
     reverse_proxy /* myoffice:8080 {
@@ -83,7 +83,7 @@ myoffice.homburg.dynv6.net {
            }
 }
 
-hass.homburg.dynv6.net {
+hass.hsofttec.com {
     encode gzip zstd
 
     reverse_proxy /* http://192.168.178.87:8123 {
@@ -98,9 +98,11 @@ hass.homburg.dynv6.net {
            }
 }
 
-bitwarden.homburg.dynv6.net {
-    reverse_proxy /* http://192.168.178.90:7277 {
+bitwarden.hsofttec.com {
+    reverse_proxy /* bitwarden:80 {
                                                     header_up Host {host}
+                                                    header_up X-Real-IP {remote_host}
+#                                                    header_up Connection "Upgrade"
                                                     header_up Upgrade websocket
                                                     transport http {
                                                                    }

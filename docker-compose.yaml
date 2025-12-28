@@ -110,7 +110,7 @@ services:
       nextcloud_redis:
         condition: service_healthy
     environment:
-      - NEXTCLOUD_TRUSTED_DOMAINS=next.homburg.dynv6.net
+      - NEXTCLOUD_TRUSTED_DOMAINS=next.hsofttec.com
       - POSTGRES_HOST=postgres
       - POSTGRES_DB
       - POSTGRES_USER
@@ -119,8 +119,8 @@ services:
       - NEXTCLOUD_ADMIN_PASSWORD_FILE=/run/secrets/nextcloud_admin_password
       - REDIS_HOST=nextcloud_redis
       - TRUSTED_PROXIES=172.18.0.0/24
-      - OVERWRITEHOST=next.homburg.dynv6.net
-      - OVERWRITECLIURL=https://next.homburg.dynv6.net
+      - OVERWRITEHOST=next.hsofttec.com
+      - OVERWRITECLIURL=https://next.hsofttec.com
       - OVERWRITEPROTOCOL=https
       - PHP_MEMORY_LIMIT=1G
       - PHP_UPLOAD_LIMIT=10G
@@ -159,7 +159,7 @@ services:
         condition: service_healthy
     environment:
       - PORT=7867
-      - NEXTCLOUD_URL=https://next.homburg.dynv6.net
+      - NEXTCLOUD_URL=https://next.hsofttec.com
     volumes:
       - nextcloud_volume:/var/www/html:ro
       - /srv/nextcloud/custom_apps:/var/www/html/custom_apps:ro
@@ -194,8 +194,8 @@ services:
       nextcloud_apps:
         condition: service_healthy
     environment:
-      - domain=next.homburg.dynv6.net
-      - server_name=collabora.homburg.dynv6.net
+      - domain=next.hsofttec.com
+      - server_name=collabora.hsofttec.com
       - "extra_params=--o:ssl.enable=false --o:ssl.termination=true -o:user_interface.use_integration_theme=false"
       - username=${COLLABORA_USER}
       - password_FILE=/run/secrets/collabora_password
@@ -325,15 +325,65 @@ services:
     networks:
       - back-end
 
-  vaultwarden:
-    image: vaultwarden/server:latest
-    container_name: vaultwarden
-    restart: unless-stopped
+  mailserver:
+    image: ghcr.io/docker-mailserver/docker-mailserver:15.1
+    container_name: mailserver
+    hostname: mail.hsofttec.com
+    env_file: mailserver.env
     ports:
-      - "777:80"
+      - "25:25"    # SMTP  (explicit TLS => STARTTLS)
+      - "143:143"  # IMAP4 (explicit TLS => STARTTLS)
+      - "465:465"  # ESMTP (implicit TLS)
+      - "587:587"  # ESMTP (explicit TLS => STARTTLS)
+      - "993:993"  # IMAP4 (implicit TLS)
+    volumes:
+      - /srv/mailserver/mail-data/:/var/mail/
+      - /srv/mailserver/mail-state/:/var/mail-state/
+      - /srv/mailserver/mail-logs/:/var/log/mail/
+      - /srv/mailserver/config/:/tmp/docker-mailserver/
+      - /etc/localtime:/etc/localtime:ro
+      - /srv/letsencrypt:/etc/letsencrypt
+    restart: unless-stopped
+    stop_grace_period: 1m
+    cap_add:
+      - NET_ADMIN
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    healthcheck:
+      test: "ss --listening --tcp | grep -P 'LISTEN.+:smtp' || exit 1"
+      timeout: 3s
+      retries: 3
+    networks:
+      - back-end
+      - front-end
+
+#    depends_on:
+#      - certbot
+#
+#  certbot:
+#    image: certbot/certbot
+#    container_name: certbot
+#    ports:
+#      - "80:80"
+#    volumes:
+#      - ./letsencrypt:/etc/letsencrypt
+#      - ./certbot/logs:/var/log/letsencrypt/
+#    command: certonly --standalone --keep-until-expiring --email mail@meinemail.de -d mail.meinserver.de --agree-tos
+
+  bitwarden:
+    image: vaultwarden/server:latest
+    container_name: bitwarden
+    restart: unless-stopped
     environment:
-      - USER_UID=1000
-      - USER_GID=1000
+#      - USER_UID=1000
+#      - USER_GID=1000
+      - ADMIN_TOKEN_FILE=/run/secrets/bitwarden_admin_token
+      - TZ='Europe/Berlin'
+      - WEBSOCKET_ENABLED=true
+      - SIGNUPS_ALLOWED=true
+      - DOMAIN=https://bitwarden.hsofttec.com
+      - LOG_LEVEL=debug
     volumes:
       - /srv/vaultwarden:/data
       - /etc/timezone:/etc/timezone:ro
@@ -350,4 +400,6 @@ secrets:
     file: ./secrets/postgres_password.txt
   collabora_password:
     file: ./secrets/collabora_password.txt
+  bitwarden_admin_token:
+    file: ./secrets/bitwarden_admin_token.txt
 

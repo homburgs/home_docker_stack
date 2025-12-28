@@ -70,6 +70,24 @@ paperless.hsofttec.com {
            }
 }
 
+paperless-ai.hsofttec.com {
+    encode gzip zstd
+
+    reverse_proxy /* paperless-ai:3000 {
+                                               header_up Host {host}
+                                               header_up X-Real-IP {remote_host}
+                                               header_up Connection "Upgrade"
+                                               header_up Upgrade websocket
+                                               transport http {
+
+                                                              }
+                                           }
+
+    header {
+               Strict-Transport-Security "max-age=31536000; includeSubDomains" always; # enable HSTS
+           }
+}
+
 myoffice.hsofttec.com {
     encode gzip zstd
 
@@ -100,16 +118,15 @@ hass.hsofttec.com {
 
 bitwarden.hsofttec.com {
     reverse_proxy /* bitwarden:80 {
-                                                    header_up Host {host}
-                                                    header_up X-Real-IP {remote_host}
-#                                                    header_up Connection "Upgrade"
-                                                    header_up Upgrade websocket
-                                                    transport http {
-                                                                   }
-                                                }
+                                      header_up Host {host}
+                                      header_up X-Real-IP {remote_host}
+                                      header_up Connection "Upgrade"
+                                      header_up Upgrade websocket
+                                      transport http {
+                                                     }
+                                  }
 
     header {
                Strict-Transport-Security "max-age=31536000; includeSubDomains" always; # enable HSTS
            }
-    tls internal
 }

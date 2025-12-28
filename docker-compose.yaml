@@ -293,6 +293,10 @@ services:
     image: clusterzx/paperless-ai:latest
     container_name: paperless-ai
     restart: unless-stopped
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges=true
     environment:
       - PUID=1000
       - PGID=1000
@@ -325,38 +329,38 @@ services:
     networks:
       - back-end
 
-  mailserver:
-    image: ghcr.io/docker-mailserver/docker-mailserver:15.1
-    container_name: mailserver
-    hostname: mail.hsofttec.com
-    env_file: mailserver.env
-    ports:
-      - "25:25"    # SMTP  (explicit TLS => STARTTLS)
-      - "143:143"  # IMAP4 (explicit TLS => STARTTLS)
-      - "465:465"  # ESMTP (implicit TLS)
-      - "587:587"  # ESMTP (explicit TLS => STARTTLS)
-      - "993:993"  # IMAP4 (implicit TLS)
-    volumes:
-      - /srv/mailserver/mail-data/:/var/mail/
-      - /srv/mailserver/mail-state/:/var/mail-state/
-      - /srv/mailserver/mail-logs/:/var/log/mail/
-      - /srv/mailserver/config/:/tmp/docker-mailserver/
-      - /etc/localtime:/etc/localtime:ro
-      - /srv/letsencrypt:/etc/letsencrypt
-    restart: unless-stopped
-    stop_grace_period: 1m
-    cap_add:
-      - NET_ADMIN
-    dns:
-      - 8.8.8.8
-      - 8.8.4.4
-    healthcheck:
-      test: "ss --listening --tcp | grep -P 'LISTEN.+:smtp' || exit 1"
-      timeout: 3s
-      retries: 3
-    networks:
-      - back-end
-      - front-end
+#  mailserver:
+#    image: ghcr.io/docker-mailserver/docker-mailserver:15.1
+#    container_name: mailserver
+#    hostname: mail.hsofttec.com
+#    env_file: mailserver.env
+#    ports:
+#      - "25:25"    # SMTP  (explicit TLS => STARTTLS)
+#      - "143:143"  # IMAP4 (explicit TLS => STARTTLS)
+#      - "465:465"  # ESMTP (implicit TLS)
+#      - "587:587"  # ESMTP (explicit TLS => STARTTLS)
+#      - "993:993"  # IMAP4 (implicit TLS)
+#    volumes:
+#      - /srv/mailserver/mail-data/:/var/mail/
+#      - /srv/mailserver/mail-state/:/var/mail-state/
+#      - /srv/mailserver/mail-logs/:/var/log/mail/
+#      - /srv/mailserver/config/:/tmp/docker-mailserver/
+#      - /etc/localtime:/etc/localtime:ro
+#      - /srv/letsencrypt:/etc/letsencrypt
+#    restart: unless-stopped
+#    stop_grace_period: 1m
+#    cap_add:
+#      - NET_ADMIN
+#    dns:
+#      - 8.8.8.8
+#      - 8.8.4.4
+#    healthcheck:
+#      test: "ss --listening --tcp | grep -P 'LISTEN.+:smtp' || exit 1"
+#      timeout: 3s
+#      retries: 3
+#    networks:
+#      - back-end
+#      - front-end
 
 #    depends_on:
 #      - certbot
@@ -376,8 +380,8 @@ services:
     container_name: bitwarden
     restart: unless-stopped
     environment:
-#      - USER_UID=1000
-#      - USER_GID=1000
+      - USER_UID=1000
+      - USER_GID=1000
       - ADMIN_TOKEN_FILE=/run/secrets/bitwarden_admin_token
       - TZ='Europe/Berlin'
       - WEBSOCKET_ENABLED=true
@@ -390,6 +394,8 @@ services:
       - /etc/localtime:/etc/localtime:ro
     networks:
       - back-end
+    secrets:
+      - bitwarden_admin_token
 
 secrets:
   gitea_db_password:

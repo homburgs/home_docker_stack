@@ -1,6 +1,8 @@
 networks:
-  front-end:
-  back-end:
+  frontend:
+  backend:
+  inhouse:
+    external: true
 
 volumes:
   nextcloud_volume:
@@ -33,7 +35,8 @@ services:
     secrets:
       - postgres_password
     networks:
-      - back-end
+      - backend
+      - inhouse
 
   reverse_proxy:
     image: caddy:2.10.2-alpine
@@ -72,10 +75,10 @@ services:
       start_period: 5s
       timeout: 5s
     networks:
-      - back-end
-      - front-end
+      - backend
+      - frontend
 
-  nextcloud_redis:
+  redis:
     image: redis:8-alpine
     container_name: nextcloud_redis
     restart: unless-stopped
@@ -98,7 +101,8 @@ services:
       retries: 3
       timeout: 3s
     networks:
-      - back-end
+      - backend
+      - inhouse
 
   nextcloud_apps:
     container_name: nextcloud_apps
@@ -107,7 +111,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      nextcloud_redis:
+      redis:
         condition: service_healthy
     environment:
       - NEXTCLOUD_TRUSTED_DOMAINS=next.hsofttec.com
@@ -117,7 +121,7 @@ services:
       - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password
       - NEXTCLOUD_ADMIN_USER
       - NEXTCLOUD_ADMIN_PASSWORD_FILE=/run/secrets/nextcloud_admin_password
-      - REDIS_HOST=nextcloud_redis
+      - REDIS_HOST=redis
       - TRUSTED_PROXIES=172.18.0.0/24
       - OVERWRITEHOST=next.hsofttec.com
       - OVERWRITECLIURL=https://next.hsofttec.com
@@ -146,7 +150,7 @@ services:
       retries: 3
       timeout: 3s
     networks:
-      - back-end
+      - backend
 
   nextcloud_notify:
     image: nextcloud:31-fpm-hsofttec
@@ -166,7 +170,7 @@ services:
       - /srv/nextcloud/config:/var/www/html/config:ro
     entrypoint: /var/www/html/custom_apps/notify_push/bin/x86_64/notify_push /var/www/html/config/config.php
     networks:
-      - back-end
+      - backend
 
   nextcloud_imaginary:
     image: nextcloud/aio-imaginary:latest
@@ -184,7 +188,7 @@ services:
     tmpfs:
       - /tmp
     networks:
-      - back-end
+      - backend
 
   collabora:
     image: collabora/code:latest
@@ -207,7 +211,7 @@ services:
     secrets:
       - collabora_password
     networks:
-      - back-end
+      - backend
 
   gitea:
     image: gitea/gitea:1.21.11
@@ -235,7 +239,7 @@ services:
     secrets:
       - gitea_db_password
     networks:
-      - back-end
+      - backend
 
   myoffice:
     image: jetty:9.4.49-jdk17
@@ -254,7 +258,7 @@ services:
       postgres:
         condition: service_healthy
     networks:
-      - back-end
+      - backend
 
   paperless:
     image: ghcr.io/paperless-ngx/paperless-ngx:latest
@@ -262,7 +266,7 @@ services:
     restart: unless-stopped
     depends_on:
       - postgres
-      - nextcloud_redis
+      - redis
       - gotenberg
       - tika
     ports:
@@ -275,7 +279,7 @@ services:
       - /srv/paperless/consume:/usr/src/paperless/consume
     env_file: paperless.env
     environment:
-      PAPERLESS_REDIS: redis://nextcloud_redis:6379
+      PAPERLESS_REDIS: redis://redis:6379
       PAPERLESS_DBENGINE: postgresql
       PAPERLESS_DBHOST: postgres
       PAPERLESS_DBUSER: ${POSTGRES_USER}
@@ -287,7 +291,7 @@ services:
       PAPERLESS_TRUSTED_PROXIES: 172.18.0.0/24
       PAPERLESS_OCR_OUTPUT_TYPE: pdfa
     networks:
-      - back-end
+      - backend
 
   paperless-ai:
     image: clusterzx/paperless-ai:latest
@@ -307,7 +311,7 @@ services:
     volumes:
       - /srv/paperless-ai/data:/app/data
     networks:
-      - back-end
+      - backend
 
   gotenberg:
     image: docker.io/gotenberg/gotenberg:8.22
@@ -320,14 +324,14 @@ services:
       - "--chromium-disable-javascript=true"
       - "--chromium-allow-list=file:///tmp/.*"
     networks:
-      - back-end
+      - backend
 
   tika:
     image: docker.io/apache/tika:latest
     container_name: tika
     restart: unless-stopped
     networks:
-      - back-end
+      - backend
 
 #  mailserver:
 #    image: ghcr.io/docker-mailserver/docker-mailserver:15.1
@@ -359,8 +363,8 @@ services:
 #      timeout: 3s
 #      retries: 3
 #    networks:
-#      - back-end
-#      - front-end
+#      - backend
+#      - frontend
 
 #    depends_on:
 #      - certbot
@@ -393,7 +397,7 @@ services:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     networks:
-      - back-end
+      - backend
     secrets:
       - bitwarden_admin_token
 

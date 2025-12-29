@@ -26,7 +26,7 @@ collabora.hsofttec.com {
                    path /cool/* # Main websocket, uploads/downloads, presentations and admin
                }
 
-    reverse_proxy @collabora http://192.168.178.119:9980 {
+    reverse_proxy @collabora collabora:9980 {
                                                              header_up Host {host}
                                                              header_up Connection "Upgrade"
                                                              header_up Upgrade websocket

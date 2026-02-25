@@ -108,7 +108,7 @@ services:
 
   nextcloud_apps:
     container_name: nextcloud_apps
-    image: nextcloud:31-fpm-hsofttec
+    image: nextcloud:32-fpm-hsofttec
     restart: unless-stopped
     depends_on:
       postgres:

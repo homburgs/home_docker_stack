@@ -130,3 +130,19 @@ bitwarden.hsofttec.com {
                Strict-Transport-Security "max-age=31536000; includeSubDomains" always; # enable HSTS
            }
 }
+
+mailx.hsofttec.com {
+    reverse_proxy /* 192.168.178.60:443 {
+                                      header_up Host {host}
+                                      header_up X-Real-IP {remote_host}
+                                      header_up Connection "Upgrade"
+                                      header_up Upgrade websocket
+
+                                      transport http {
+                                                         tls_insecure_skip_verify
+                                                     }
+                                  }
+    header {
+               Strict-Transport-Security "max-age=31536000; includeSubDomains" always; # enable HSTS
+           }
+}

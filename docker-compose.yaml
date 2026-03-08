@@ -40,6 +40,29 @@ services:
       - backend
       - inhouse
 
+  adguard:
+    image: adguard/adguardhome:latest
+    container_name: adguard-server
+    restart: unless-stopped
+    volumes:
+      - /srv/adguard/work:/opt/adguardhome/work
+      - /srv/adguard/conf:/opt/adguardhome/conf
+    ports:
+      - "192.168.178.119:53:53/tcp"
+      - "192.168.178.119:53:53/udp"
+      - "192.168.178.119:67:67/udp"
+      - "192.168.178.119:1068:68/tcp"
+      - "192.168.178.119:1068:68/udp"
+      - "192.168.178.119:1080:80/tcp"
+      - "192.168.178.119:10443:443/tcp"
+      - "192.168.178.119:3003:3000/tcp"
+      - "192.168.178.119:853:853/tcp"
+#      - "192.168.178.119:853:853/udp"
+      - "192.168.178.119:784:784/udp"
+#      - "192.168.178.119:8853:8853/udp"
+#      - "192.168.178.119:5443:5443/tcp"
+#      - "192.168.178.119:5443:5443/udp"
+
   reverse_proxy:
     image: caddy:2.10.2-alpine
     container_name: reverse_proxy
@@ -334,52 +357,6 @@ services:
     restart: unless-stopped
     networks:
       - backend
-
-#  mailserver:
-#    image: ghcr.io/docker-mailserver/docker-mailserver:15.1
-#    container_name: mailserver
-#    hostname: mail.hsofttec.com
-#    env_file: mailserver.env
-#    ports:
-#      - "25:25"    # SMTP  (explicit TLS => STARTTLS)
-#      - "143:143"  # IMAP4 (explicit TLS => STARTTLS)
-#      - "465:465"  # ESMTP (implicit TLS)
-#      - "587:587"  # ESMTP (explicit TLS => STARTTLS)
-#      - "993:993"  # IMAP4 (implicit TLS)
-#    volumes:
-#      - /srv/mailserver/mail-data/:/var/mail/
-#      - /srv/mailserver/mail-state/:/var/mail-state/
-#      - /srv/mailserver/mail-logs/:/var/log/mail/
-#      - /srv/mailserver/config/:/tmp/docker-mailserver/
-#      - /etc/localtime:/etc/localtime:ro
-#      - /srv/letsencrypt:/etc/letsencrypt
-#    restart: unless-stopped
-#    stop_grace_period: 1m
-#    cap_add:
-#      - NET_ADMIN
-#    dns:
-#      - 8.8.8.8
-#      - 8.8.4.4
-#    healthcheck:
-#      test: "ss --listening --tcp | grep -P 'LISTEN.+:smtp' || exit 1"
-#      timeout: 3s
-#      retries: 3
-#    networks:
-#      - backend
-#      - frontend
-
-#    depends_on:
-#      - certbot
-#
-#  certbot:
-#    image: certbot/certbot
-#    container_name: certbot
-#    ports:
-#      - "80:80"
-#    volumes:
-#      - ./letsencrypt:/etc/letsencrypt
-#      - ./certbot/logs:/var/log/letsencrypt/
-#    command: certonly --standalone --keep-until-expiring --email mail@meinemail.de -d mail.meinserver.de --agree-tos
 
   bitwarden:
     image: vaultwarden/server:latest

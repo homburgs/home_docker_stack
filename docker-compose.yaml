@@ -380,6 +380,86 @@ services:
     secrets:
       - bitwarden_admin_token
 
+#  matter:
+#    container_name: matter-server
+#    image: ghcr.io/home-assistant-libs/python-matter-server:stable
+#    pull_policy: always
+#    restart: unless-stopped
+#    security_opt:
+#      - apparmor=unconfined
+#    environment:
+#      - MATTER_SERVER_WEBPORT=5580
+#    volumes:
+#      - /srv/matter:/data
+#      - /run/dbus:/run/dbus:ro
+#      - /etc/localtime:/etc/localtime:ro
+#    network_mode: host
+#    command: --paa-root-cert-dir /data/credentials --storage-path /data
+
+  music-assistant-server:
+    image: ghcr.io/music-assistant/server:latest
+    container_name: music-assistant-server
+    pull_policy: always
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - /srv/music-assistant-server/data:/data/
+    cap_add:
+      - SYS_ADMIN
+      - DAC_READ_SEARCH
+    security_opt:
+      - apparmor:unconfined
+    environment:
+      # default=info, possible=(critical, error, warning, info, debug)
+      - LOG_LEVEL=warning
+
+  esphome:
+    container_name: esphome
+    image: ghcr.io/esphome/esphome:latest
+    pull_policy: always
+    restart: unless-stopped
+    privileged: true
+    volumes:
+      - /srv/esphome/config:/config
+      - /srv/esphome/cache:/cache
+      - /etc/localtime:/etc/localtime:ro
+    network_mode: host
+    environment:
+      - USERNAME=admin
+      - PASSWORD_FILE=/run/secrets/esphome_password
+    secrets:
+      - esphome_password
+
+  zigbee2mqtt:
+    container_name: zigbee2mqtt
+    image: ghcr.io/koenkk/zigbee2mqtt:latest
+    pull_policy: always
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - /srv/zigbee2mqtt/data:/app/data
+      - /run/udev:/run/udev:ro
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - TZ=Europe/Berlin
+      - ZIGBEE2MQTT_CONFIG_SERIAL_PORT=/dev/serial/by-id/usb-ITead_Sonoff_Zigbee_3.0_USB_Dongle_Plus_5ee959c365afed1182f23d4e71c9e8b5-if00-port0
+      - ZIGBEE2MQTT_CONFIG_SERIAL_ADAPTER=zstack
+      - ZIGBEE2MQTT_CONFIG_SERIAL_BAUDRATE=115200
+      - ZIGBEE2MQTT_CONFIG_SERIAL_RTSCTS=false
+      - ZIGBEE2MQTT_CONFIG_ADVANCED_CHANNEL=11
+      - ZIGBEE2MQTT_CONFIG_MQTT_BASE_TOPIC=zigbee2mqtt
+      - ZIGBEE2MQTT_CONFIG_MQTT_SERVER=mqtt://192.168.178.87:1883
+      - ZIGBEE2MQTT_CONFIG_MQTT_USER=sven
+      - ZIGBEE2MQTT_CONFIG_MQTT_PASSWORD_FILE=/run/secrets/zigbee2mqtt_password
+      - ZIGBEE2MQTT_CONFIG_HOMEASSISTANT_ENABLED=true
+      - ZIGBEE2MQTT_CONFIG_FRONTEND_ENABLED=true
+      - ZIGBEE2MQTT_CONFIG_FRONTEND_PORT=8090
+      - ZIGBEE2MQTT_CONFIG_ADVANCED_LOG_LEVEL=info
+    devices:
+      - /dev/serial/by-id/usb-ITead_Sonoff_Zigbee_3.0_USB_Dongle_Plus_5ee959c365afed1182f23d4e71c9e8b5-if00-port0
+    secrets:
+      - zigbee2mqtt_password
+
 secrets:
   gitea_db_password:
     file: ./secrets/gitea_db_password.txt
@@ -389,6 +469,10 @@ secrets:
     file: ./secrets/postgres_password.txt
   collabora_password:
     file: ./secrets/collabora_password.txt
+  zigbee2mqtt_password:
+    file: ./secrets/zigbee2mqtt_password.txt
+  esphome_password:
+    file: ./secrets/esphome_password.txt
   bitwarden_admin_token:
     file: ./secrets/bitwarden_admin_token.txt
 

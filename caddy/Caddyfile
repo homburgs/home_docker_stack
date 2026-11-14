@@ -104,7 +104,7 @@ myoffice.hsofttec.com {
 hass.hsofttec.com {
     encode gzip zstd
 
-    reverse_proxy /* http://192.168.178.87:8123 {
+    reverse_proxy /* http://192.168.178.135:8123 {
                                                     header_up Host {host}
                                                     header_up Upgrade websocket
                                                     transport http {
@@ -132,7 +132,7 @@ bitwarden.hsofttec.com {
 }
 
 mailx.hsofttec.com {
-    reverse_proxy /* 192.168.178.60:443 {
+    reverse_proxy /* 192.168.178.135:443 {
                                       header_up Host {host}
                                       header_up X-Real-IP {remote_host}
                                       header_up Connection "Upgrade"

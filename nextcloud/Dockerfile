@@ -1,4 +1,4 @@
-FROM nextcloud:32-fpm
+FROM nextcloud:fpm
 
 RUN <<EOT
   set -ex
@@ -9,4 +9,4 @@ RUN <<EOT
   rm -rf /var/lib/apt/lists/*
 EOT
 
-#ENV NEXTCLOUD_UPDATE=1
+ENV NEXTCLOUD_UPDATE=1

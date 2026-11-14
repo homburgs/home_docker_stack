@@ -1,12 +1,13 @@
-networks:
-  frontend:
-  backend:
-  inhouse:
-    external: true
+#networks:
+#  frontend:
+#  backend:
+#  inhouse:
+#    external: true
 
 volumes:
   nextcloud_volume:
   redis_volume:
+  immich-model-cache:
 
 services:
 
@@ -24,10 +25,11 @@ services:
       - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password
       - PGDATA=/var/lib/postgresql/data
       - LANG=de_DE.utf8
-      - POSTGRES_INITDB_ARGS=--locale-provider=icu --icu-locale=de-DE
+      - POSTGRES_INITDB_ARGS=--locale-provider=icu --icu-locale=de-DE --data-checksums
     volumes:
       - /srv/postgres/data:/var/lib/postgresql/data
       - /srv/postgres/srv:/srv # data directory for external dumps
+    shm_size: 128mb
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -d nextcloud -U postgres" ]
       start_period: 15s
@@ -36,32 +38,33 @@ services:
       timeout: 5s
     secrets:
       - postgres_password
-    networks:
-      - backend
-      - inhouse
+#    networks:
+#      - backend
+#      - inhouse
 
-  adguard:
-    image: adguard/adguardhome:latest
-    container_name: adguard-server
-    restart: unless-stopped
-    volumes:
-      - /srv/adguard/work:/opt/adguardhome/work
-      - /srv/adguard/conf:/opt/adguardhome/conf
-    ports:
-      - "192.168.178.119:53:53/tcp"
-      - "192.168.178.119:53:53/udp"
-      - "192.168.178.119:67:67/udp"
-      - "192.168.178.119:1068:68/tcp"
-      - "192.168.178.119:1068:68/udp"
-      - "192.168.178.119:1080:80/tcp"
-      - "192.168.178.119:10443:443/tcp"
-      - "192.168.178.119:3003:3000/tcp"
-      - "192.168.178.119:853:853/tcp"
-#      - "192.168.178.119:853:853/udp"
-      - "192.168.178.119:784:784/udp"
-#      - "192.168.178.119:8853:8853/udp"
-#      - "192.168.178.119:5443:5443/tcp"
-#      - "192.168.178.119:5443:5443/udp"
+# AdGuard is managed separately via adguard.sh and adguard-compose.yaml.
+#  adguard:
+#    image: adguard/adguardhome:latest
+#    container_name: adguard-server
+#    restart: unless-stopped
+#    volumes:
+#      - /srv/adguard/work:/opt/adguardhome/work
+#      - /srv/adguard/conf:/opt/adguardhome/conf
+#    ports:
+#      - "192.168.178.119:53:53/tcp"
+#      - "192.168.178.119:53:53/udp"
+#      - "192.168.178.119:67:67/udp"
+#      - "192.168.178.119:1068:68/tcp"
+#      - "192.168.178.119:1068:68/udp"
+#      - "192.168.178.119:1080:80/tcp"
+#      - "192.168.178.119:10443:443/tcp"
+#      - "192.168.178.119:3003:3000/tcp"
+#      - "192.168.178.119:853:853/tcp"
+##      - "192.168.178.119:853:853/udp"
+#      - "192.168.178.119:784:784/udp"
+##      - "192.168.178.119:8853:8853/udp"
+##      - "192.168.178.119:5443:5443/tcp"
+##      - "192.168.178.119:5443:5443/udp"
 
   reverse_proxy:
     image: caddy:2.10.2-alpine
@@ -99,14 +102,15 @@ services:
       retries: 3
       start_period: 5s
       timeout: 5s
-    networks:
-      - backend
-      - frontend
+#    networks:
+#      - backend
+#      - frontend
 
   redis:
     image: redis:8-alpine
     container_name: nextcloud_redis
     restart: unless-stopped
+    pull_policy: always
     command:
       - --save ""
     volumes:
@@ -125,13 +129,13 @@ services:
       interval: 30s
       retries: 3
       timeout: 3s
-    networks:
-      - backend
-      - inhouse
+#    networks:
+#      - backend
+#      - inhouse
 
   nextcloud_apps:
     container_name: nextcloud_apps
-    image: nextcloud:32-fpm-hsofttec
+    image: nextcloud:latest-fpm-hsofttec
     restart: unless-stopped
     depends_on:
       postgres:
@@ -174,11 +178,11 @@ services:
       interval: 10s
       retries: 3
       timeout: 3s
-    networks:
-      - backend
+#    networks:
+#      - backend
 
   nextcloud_notify:
-    image: nextcloud:31-fpm-hsofttec
+    image: nextcloud:latest-fpm-hsofttec
     container_name: nextcloud_notify
     restart: unless-stopped
     depends_on:
@@ -194,8 +198,8 @@ services:
       - /srv/nextcloud/custom_apps:/var/www/html/custom_apps:ro
       - /srv/nextcloud/config:/var/www/html/config:ro
     entrypoint: /var/www/html/custom_apps/notify_push/bin/x86_64/notify_push /var/www/html/config/config.php
-    networks:
-      - backend
+#    networks:
+#      - backend
 
   nextcloud_imaginary:
     image: nextcloud/aio-imaginary:latest
@@ -212,8 +216,8 @@ services:
       - SYS_NICE
     tmpfs:
       - /tmp
-    networks:
-      - backend
+#    networks:
+#      - backend
 
   collabora:
     image: collabora/code:latest
@@ -235,8 +239,8 @@ services:
       - "9980:9980"
     secrets:
       - collabora_password
-    networks:
-      - backend
+#    networks:
+#      - backend
 
   gitea:
     image: gitea/gitea:1.21.11
@@ -263,8 +267,8 @@ services:
       - "2222:22"
     secrets:
       - gitea_db_password
-    networks:
-      - backend
+#    networks:
+#      - backend
 
   myoffice:
     image: jetty:9.4.49-jdk17
@@ -282,12 +286,13 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    networks:
-      - backend
+#    networks:
+#      - backend
 
   paperless:
     image: ghcr.io/paperless-ngx/paperless-ngx:latest
     container_name: paperless
+    pull_policy: always
     restart: unless-stopped
     depends_on:
       - postgres
@@ -315,32 +320,35 @@ services:
       PAPERLESS_OCR_LANGUAGE: deu
       PAPERLESS_TRUSTED_PROXIES: 172.18.0.0/24
       PAPERLESS_OCR_OUTPUT_TYPE: pdfa
-    networks:
-      - backend
+      PAPERLESS_SECRET_KEY: 4711_W?MHh2B!_0501
+#    networks:
+#      - backend
 
-  paperless-ai:
-    image: clusterzx/paperless-ai:latest
-    container_name: paperless-ai
-    restart: unless-stopped
-    cap_drop:
-      - ALL
-    security_opt:
-      - no-new-privileges=true
-    environment:
-      - PUID=1000
-      - PGID=1000
-    depends_on:
-      - paperless
-    ports:
-      - "4000:3000"
-    volumes:
-      - /srv/paperless-ai/data:/app/data
-    networks:
-      - backend
+#  paperless-ai:
+#    image: clusterzx/paperless-ai:latest
+#    container_name: paperless-ai
+#    pull_policy: always
+#    restart: unless-stopped
+#    cap_drop:
+#      - ALL
+#    security_opt:
+#      - no-new-privileges=true
+#    environment:
+#      - PUID=1000
+#      - PGID=1000
+#    depends_on:
+#      - paperless
+#    ports:
+#      - "4000:3000"
+#    volumes:
+#      - /srv/paperless-ai/data:/app/data
+#    networks:
+#      - backend
 
   gotenberg:
-    image: docker.io/gotenberg/gotenberg:8.22
+    image: gotenberg/gotenberg:8
     container_name: gotenberg
+    pull_policy: always
     restart: unless-stopped
     # The gotenberg chromium route is used to convert .eml files. We do not
     # want to allow external content like tracking pixels or even javascript.
@@ -348,20 +356,22 @@ services:
       - "gotenberg"
       - "--chromium-disable-javascript=true"
       - "--chromium-allow-list=file:///tmp/.*"
-    networks:
-      - backend
+#    networks:
+#      - backend
 
   tika:
-    image: docker.io/apache/tika:latest
+    image: apache/tika:latest
     container_name: tika
     restart: unless-stopped
-    networks:
-      - backend
+    pull_policy: always
+#    networks:
+#      - backend
 
   bitwarden:
     image: vaultwarden/server:latest
     container_name: bitwarden
     restart: unless-stopped
+    pull_policy: always
     environment:
       - USER_UID=1000
       - USER_GID=1000
@@ -375,90 +385,8 @@ services:
       - /srv/vaultwarden:/data
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
-    networks:
-      - backend
     secrets:
       - bitwarden_admin_token
-
-#  matter:
-#    container_name: matter-server
-#    image: ghcr.io/home-assistant-libs/python-matter-server:stable
-#    pull_policy: always
-#    restart: unless-stopped
-#    security_opt:
-#      - apparmor=unconfined
-#    environment:
-#      - MATTER_SERVER_WEBPORT=5580
-#    volumes:
-#      - /srv/matter:/data
-#      - /run/dbus:/run/dbus:ro
-#      - /etc/localtime:/etc/localtime:ro
-#    network_mode: host
-#    command: --paa-root-cert-dir /data/credentials --storage-path /data
-
-  music-assistant-server:
-    image: ghcr.io/music-assistant/server:latest
-    container_name: music-assistant-server
-    pull_policy: always
-    restart: unless-stopped
-    network_mode: host
-    volumes:
-      - /srv/music-assistant-server/data:/data/
-    cap_add:
-      - SYS_ADMIN
-      - DAC_READ_SEARCH
-    security_opt:
-      - apparmor:unconfined
-    environment:
-      # default=info, possible=(critical, error, warning, info, debug)
-      - LOG_LEVEL=warning
-
-  esphome:
-    container_name: esphome
-    image: ghcr.io/esphome/esphome:latest
-    pull_policy: always
-    restart: unless-stopped
-    privileged: true
-    volumes:
-      - /srv/esphome/config:/config
-      - /srv/esphome/cache:/cache
-      - /etc/localtime:/etc/localtime:ro
-    network_mode: host
-    environment:
-      - USERNAME=admin
-      - PASSWORD_FILE=/run/secrets/esphome_password
-    secrets:
-      - esphome_password
-
-  zigbee2mqtt:
-    container_name: zigbee2mqtt
-    image: ghcr.io/koenkk/zigbee2mqtt:latest
-    pull_policy: always
-    restart: unless-stopped
-    network_mode: host
-    volumes:
-      - /srv/zigbee2mqtt/data:/app/data
-      - /run/udev:/run/udev:ro
-      - /etc/localtime:/etc/localtime:ro
-    environment:
-      - TZ=Europe/Berlin
-      - ZIGBEE2MQTT_CONFIG_SERIAL_PORT=/dev/serial/by-id/usb-ITead_Sonoff_Zigbee_3.0_USB_Dongle_Plus_5ee959c365afed1182f23d4e71c9e8b5-if00-port0
-      - ZIGBEE2MQTT_CONFIG_SERIAL_ADAPTER=zstack
-      - ZIGBEE2MQTT_CONFIG_SERIAL_BAUDRATE=115200
-      - ZIGBEE2MQTT_CONFIG_SERIAL_RTSCTS=false
-      - ZIGBEE2MQTT_CONFIG_ADVANCED_CHANNEL=11
-      - ZIGBEE2MQTT_CONFIG_MQTT_BASE_TOPIC=zigbee2mqtt
-      - ZIGBEE2MQTT_CONFIG_MQTT_SERVER=mqtt://192.168.178.87:1883
-      - ZIGBEE2MQTT_CONFIG_MQTT_USER=sven
-      - ZIGBEE2MQTT_CONFIG_MQTT_PASSWORD_FILE=/run/secrets/zigbee2mqtt_password
-      - ZIGBEE2MQTT_CONFIG_HOMEASSISTANT_ENABLED=true
-      - ZIGBEE2MQTT_CONFIG_FRONTEND_ENABLED=true
-      - ZIGBEE2MQTT_CONFIG_FRONTEND_PORT=8090
-      - ZIGBEE2MQTT_CONFIG_ADVANCED_LOG_LEVEL=info
-    devices:
-      - /dev/serial/by-id/usb-ITead_Sonoff_Zigbee_3.0_USB_Dongle_Plus_5ee959c365afed1182f23d4e71c9e8b5-if00-port0
-    secrets:
-      - zigbee2mqtt_password
 
 secrets:
   gitea_db_password:
@@ -469,10 +397,6 @@ secrets:
     file: ./secrets/postgres_password.txt
   collabora_password:
     file: ./secrets/collabora_password.txt
-  zigbee2mqtt_password:
-    file: ./secrets/zigbee2mqtt_password.txt
-  esphome_password:
-    file: ./secrets/esphome_password.txt
   bitwarden_admin_token:
     file: ./secrets/bitwarden_admin_token.txt
 

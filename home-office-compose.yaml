@@ -21,8 +21,8 @@ services:
       - LANG=de_DE.utf8
       - POSTGRES_INITDB_ARGS=--locale-provider=icu --icu-locale=de-DE --data-checksums
     volumes:
-      - /srv/postgres/data:/var/lib/postgresql/data
-      - /srv/postgres/srv:/srv # data directory for external dumps
+      - ${POSTGRES_DATA_PATH}:/var/lib/postgresql/data
+      - ${POSTGRES_SRV_PATH}:/srv # data directory for external dumps
     shm_size: 128mb
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -d nextcloud -U postgres" ]

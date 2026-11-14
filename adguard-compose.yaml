@@ -6,8 +6,8 @@ services:
     environment:
       - TZ
     volumes:
-      - /srv/adguard/work:/opt/adguardhome/work
-      - /srv/adguard/conf:/opt/adguardhome/conf
+      - ${ADGUARD_WORK_PATH}:/opt/adguardhome/work
+      - ${ADGUARD_CONF_PATH}:/opt/adguardhome/conf
     ports:
       - "192.168.178.119:53:53/tcp"
       - "192.168.178.119:53:53/udp"

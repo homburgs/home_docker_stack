@@ -1,9 +1,3 @@
-#networks:
-#  frontend:
-#  backend:
-#  inhouse:
-#    external: true
-
 volumes:
   nextcloud_volume:
   redis_volume:
@@ -38,33 +32,6 @@ services:
       timeout: 5s
     secrets:
       - postgres_password
-#    networks:
-#      - backend
-#      - inhouse
-
-# AdGuard is managed separately via adguard.sh and adguard-compose.yaml.
-#  adguard:
-#    image: adguard/adguardhome:latest
-#    container_name: adguard-server
-#    restart: unless-stopped
-#    volumes:
-#      - /srv/adguard/work:/opt/adguardhome/work
-#      - /srv/adguard/conf:/opt/adguardhome/conf
-#    ports:
-#      - "192.168.178.119:53:53/tcp"
-#      - "192.168.178.119:53:53/udp"
-#      - "192.168.178.119:67:67/udp"
-#      - "192.168.178.119:1068:68/tcp"
-#      - "192.168.178.119:1068:68/udp"
-#      - "192.168.178.119:1080:80/tcp"
-#      - "192.168.178.119:10443:443/tcp"
-#      - "192.168.178.119:3003:3000/tcp"
-#      - "192.168.178.119:853:853/tcp"
-##      - "192.168.178.119:853:853/udp"
-#      - "192.168.178.119:784:784/udp"
-##      - "192.168.178.119:8853:8853/udp"
-##      - "192.168.178.119:5443:5443/tcp"
-##      - "192.168.178.119:5443:5443/udp"
 
   reverse_proxy:
     image: caddy:2.10.2-alpine
@@ -102,9 +69,6 @@ services:
       retries: 3
       start_period: 5s
       timeout: 5s
-#    networks:
-#      - backend
-#      - frontend
 
   redis:
     image: redis:8-alpine
@@ -129,9 +93,6 @@ services:
       interval: 30s
       retries: 3
       timeout: 3s
-#    networks:
-#      - backend
-#      - inhouse
 
   nextcloud_apps:
     container_name: nextcloud_apps
@@ -178,8 +139,6 @@ services:
       interval: 10s
       retries: 3
       timeout: 3s
-#    networks:
-#      - backend
 
   nextcloud_notify:
     image: nextcloud:latest-fpm-hsofttec
@@ -198,8 +157,6 @@ services:
       - /srv/nextcloud/custom_apps:/var/www/html/custom_apps:ro
       - /srv/nextcloud/config:/var/www/html/config:ro
     entrypoint: /var/www/html/custom_apps/notify_push/bin/x86_64/notify_push /var/www/html/config/config.php
-#    networks:
-#      - backend
 
   nextcloud_imaginary:
     image: nextcloud/aio-imaginary:latest
@@ -216,8 +173,6 @@ services:
       - SYS_NICE
     tmpfs:
       - /tmp
-#    networks:
-#      - backend
 
   collabora:
     image: collabora/code:latest
@@ -239,8 +194,6 @@ services:
       - "9980:9980"
     secrets:
       - collabora_password
-#    networks:
-#      - backend
 
   gitea:
     image: gitea/gitea:1.21.11
@@ -267,8 +220,6 @@ services:
       - "2222:22"
     secrets:
       - gitea_db_password
-#    networks:
-#      - backend
 
   myoffice:
     image: jetty:9.4.49-jdk17
@@ -286,8 +237,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-#    networks:
-#      - backend
 
   paperless:
     image: ghcr.io/paperless-ngx/paperless-ngx:latest
@@ -321,8 +270,6 @@ services:
       PAPERLESS_TRUSTED_PROXIES: 172.18.0.0/24
       PAPERLESS_OCR_OUTPUT_TYPE: pdfa
       PAPERLESS_SECRET_KEY: 4711_W?MHh2B!_0501
-#    networks:
-#      - backend
 
 #  paperless-ai:
 #    image: clusterzx/paperless-ai:latest
@@ -356,16 +303,12 @@ services:
       - "gotenberg"
       - "--chromium-disable-javascript=true"
       - "--chromium-allow-list=file:///tmp/.*"
-#    networks:
-#      - backend
 
   tika:
     image: apache/tika:latest
     container_name: tika
     restart: unless-stopped
     pull_policy: always
-#    networks:
-#      - backend
 
   bitwarden:
     image: vaultwarden/server:latest

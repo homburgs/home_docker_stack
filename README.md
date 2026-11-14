@@ -1,6 +1,6 @@
 # Container-Umgebung
 
-Dieses Repository enthält Docker-Compose-Konfigurationen für einen privaten Server. Der Haupt-Stack wird über `docker-compose.yaml` verwaltet; AdGuard Home ist wegen seiner besonderen Netzwerk- und Portbelegung ein eigener Stack. Die Konfiguration enthält feste Host-Pfade, Netzwerkadressen und Hostnamen und ist daher nicht ohne Anpassungen auf einen anderen Rechner übertragbar.
+Dieses Repository enthält Docker-Compose-Konfigurationen für einen privaten Server. Der Haupt-Stack wird über `home-office-compose.yaml` verwaltet; AdGuard Home ist wegen seiner besonderen Netzwerk- und Portbelegung ein eigener Stack. Die Konfiguration enthält feste Host-Pfade, Netzwerkadressen und Hostnamen und ist daher nicht ohne Anpassungen auf einen anderen Rechner übertragbar.
 
 ## Enthaltene Dienste und Dateien
 
@@ -44,14 +44,14 @@ Die Haupt-Compose-Datei erwartet folgende Secret-Dateien:
 
 Die gemeinsame Datei für PostgreSQL und das Nextcloud-Administratorkennwort ist in der Compose-Konfiguration ausdrücklich so eingetragen. Prüfe, ob das beabsichtigt ist; bei getrennten Kennwörtern muss die Secret-Zuordnung angepasst werden. Secret-Inhalte nicht in diese README, in Versionskontrolle oder in Logs kopieren und Dateien nur für berechtigte Benutzer lesbar halten.
 
-**Vor einem Betrieb besonders prüfen:** In `docker-compose.yaml` sind für Paperless-ngx ein Datenbankkennwort und ein Anwendungsschlüssel direkt in der Konfiguration hinterlegt. Diese Werte vor einem Einsatz durch eine geeignete Secret-Verwaltung ersetzen; falls es echte oder bereits verwendete Zugangsdaten sind, rotieren. Vaultwarden ist außerdem so konfiguriert, dass Registrierungen erlaubt sind und Debug-Logging aktiviert ist. Vor einer Erreichbarkeit aus dem Internet diese Einstellungen und alle veröffentlichten Ports überprüfen.
+**Vor einem Betrieb besonders prüfen:** In `home-office-compose.yaml` sind für Paperless-ngx ein Datenbankkennwort und ein Anwendungsschlüssel direkt in der Konfiguration hinterlegt. Diese Werte vor einem Einsatz durch eine geeignete Secret-Verwaltung ersetzen; falls es echte oder bereits verwendete Zugangsdaten sind, rotieren. Vaultwarden ist außerdem so konfiguriert, dass Registrierungen erlaubt sind und Debug-Logging aktiviert ist. Vor einer Erreichbarkeit aus dem Internet diese Einstellungen und alle veröffentlichten Ports überprüfen.
 
 `.gitignore` schließt `secrets/*.txt` aus, jedoch nicht ausdrücklich `.env` oder `paperless.env`. Prüfe vor jedem Commit, dass dort keine Zugangsdaten oder andere vertrauliche Werte eingecheckt werden.
 
 ## Haupt-Stack starten
 
 1. `.env`, `paperless.env` und die oben genannten Secret-Dateien sicher und passend zur eigenen Installation vorbereiten.
-2. Feste Host-Pfade, Hostnamen, DNS-/Proxy-Einstellungen und Ports in `docker-compose.yaml`, `caddy/Caddyfile` und `caddy/nextcloud.remote` prüfen. Caddy enthält auch Routen zu Zielen, die nicht als aktive Dienste in `docker-compose.yaml` definiert sind; diese müssen extern erreichbar sein oder angepasst bzw. entfernt werden.
+2. Feste Host-Pfade, Hostnamen, DNS-/Proxy-Einstellungen und Ports in `home-office-compose.yaml`, `caddy/Caddyfile` und `caddy/nextcloud.remote` prüfen. Caddy enthält auch Routen zu Zielen, die nicht als aktive Dienste in `home-office-compose.yaml` definiert sind; diese müssen extern erreichbar sein oder angepasst bzw. entfernt werden.
 3. Das Nextcloud-Image lokal bauen. Compose referenziert `nextcloud:latest-fpm-hsofttec`, enthält aber keinen `build:`-Abschnitt:
 
    ```bash

@@ -4,7 +4,6 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 COMPOSE_FILE="$SCRIPT_DIR/home-office-compose.yaml"
 PROJECT="home-office"
-SERVICE="home-office"
 
 dc() {
   docker compose -f "$COMPOSE_FILE" --env-file "$SCRIPT_DIR/.env" -p "$PROJECT" "$@"
@@ -26,13 +25,13 @@ EOF
 }
 
 case "${1:-up}" in
-  up|start)   dc up -d "$SERVICE" ;;
+  up|start)   dc up -d ;;
   down|stop)  dc down ;;
-  restart)    dc restart "$SERVICE" ;;
-  logs)       dc logs -f --tail=100 "$SERVICE" ;;
+  restart)    dc restart ;;
+  logs)       dc logs -f --tail=100 ;;
   pull)
-    dc pull "$SERVICE"
-    echo "Image pulled. Run './adguard.sh up' to apply it."
+    dc pull
+    echo "Image pulled. Run './home-office.sh up' to apply it."
     ;;
   status|ps)  dc ps ;;
   -h|--help)  usage; exit 0 ;;
